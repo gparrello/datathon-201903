@@ -1,5 +1,5 @@
 
-
+# this file should be intended to be outside github too, so everyone can do their own experiments.
 
 setwd("./datathon-201903/")
 ####  Inicialization and Libraries. ####  
