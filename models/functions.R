@@ -1,14 +1,26 @@
 pacman::p_load(
   "caret",
-  "xgboost",
-  "randomForest",
-  "e1071",
-  "gbm",
-  "doMC"
+  "doMC",
+  "randomForest"
 )
 
-do_modeling <- function(x, y, caret = FALSE){
+make_partition <- function(data, dependent){
+  
+  sets <- c()
+  in_training <- createDataPartition(
+    dependent,
+    p = .75,
+    list = FALSE
+  )
+  sets[["train"]] <- data[in_training,]
+  sets[["test"]] <- data[-in_training,]
+  
+  return(sets)
+  
+}
 
+do_modeling <- function(x, y){ browser()
+  
   model <- c()
   
   # Train Control
@@ -22,81 +34,33 @@ do_modeling <- function(x, y, caret = FALSE){
   
   fitControl <- trainControl(
     method = "repeatedcv",
-    index = cvFolds,
-    allowParallel = TRUE
+    index = cvFolds
   )
   
-  if (caret == TRUE) {
-      
-    # Train
-    tuneLength <- 1
-    allmodels <- list(
-      # "svmLinear",
-      # "svmRadial",
-      # "svmPoly",
-      # "lm",
-      # "knn",
-      # "gbm",
-      # "xgbTree",
-      "rf"
-    )
-    
-    for(m in allmodels){
-      model[[m]] <- train(
-        x = x,
-        y = y,
-        # data = trainingSet, # the problem is here!
-        method = m,
-        trControl = fitControl,
-        tuneLength = tuneLength
-      )
-    }
+  # Train RF
+  bestmtry <- tuneRF(
+    x, y,
+    ntreeTry = 10,
+    stepFactor = 2,
+    improve = 0.05,
+    trace = TRUE,
+    trControl = fitControl
+  )
   
-  } else {
-    
-    # Train RF
-    bestmtry <- tuneRF(
-      x, y,
-      ntreeTry = 100,
-      stepFactor = 2,
-      improve = 0.05,
-      trace = TRUE,
-      plot = FALSE,
-      trControl = fitControl,
-      allowParallel = TRUE
-    )
-
-    model[["rf"]] <- foreach(
-      ntree=rep(100, 5),
-      .combine = combine,
-      .multicombine = TRUE,
-      .packages = "randomForest"
-    ) %dopar% {
-      randomForest(
-      y = y,
-      x = x,
-      importance = TRUE,
-      method = "rf",
-      ntree = ntree,
-      mtry = bestmtry[[1]],
-      trControl = fitControl
-      )
-    }
-    
-    temp_data <- as.data.frame(cbind(as.data.frame(x),as.data.frame(y)))
-    model[["gbm"]] <- gbm(
-      y ~ .,
-      data = temp_data,
-      n.trees = 500,
-      cv.folds = 10,
-      n.cores = 6
-    )
-    rm(temp_data)
-
-  }
+  bestmtry <- sort(bestmtry)
+  
+  model[["rf"]] <- randomForest(
+    y = y,
+    x = x,
+    importance = TRUE,
+    method = "rf",
+    ntree = 10,
+    mtry = bestmtry[[1]],
+    trControl = fitControl
+  )
   
   return(model)
-
+  
 }
 
 get_predictions <- function(predictors, model){
@@ -125,9 +89,8 @@ get_metrics <- function(predicted, real){
   metrics$variable <- vars
   
   return(metrics)
-
+  
 }
-
 
 get_errors <- function(predicted, real){
   
@@ -154,12 +117,7 @@ get_errors <- function(predicted, real){
   
 }
 
-
-get_time <- function(){
-  t <- strftime(as.POSIXct(Sys.time()), "%Y%m%d%H%M")
-  return(t)
-}
-
+# for revision, do not use!
 save_model <- function(label, x, y){
   
   start_time <- get_time()
@@ -183,13 +141,4 @@ save_model <- function(label, x, y){
   }
   
   return(model)
-}
-
-get_predictors <- function(data, predictors = c()){
-  
-  waps <- grep("WAP", names(data), value = TRUE)
-  predictors <- c(waps, predictors)  
-  
-  return(predictors)
-
 }
