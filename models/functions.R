@@ -19,7 +19,7 @@ make_partition <- function(data, dependent){
   
 }
 
-do_modeling <- function(x, y){ browser()
+do_modeling <- function(x, y){
   
   model <- c()
   
@@ -40,22 +40,23 @@ do_modeling <- function(x, y){ browser()
   # Train RF
   bestmtry <- tuneRF(
     x, y,
-    ntreeTry = 10,
+    ntreeTry = 100,
     stepFactor = 2,
     improve = 0.05,
     trace = TRUE,
     trControl = fitControl
   )
   
-  bestmtry <- sort(bestmtry)
+  browser()
+  mtry <- 0
   
   model[["rf"]] <- randomForest(
     y = y,
     x = x,
     importance = TRUE,
     method = "rf",
-    ntree = 10,
-    mtry = bestmtry[[1]],
+    ntree = 100,
+    mtry = mtry,
     trControl = fitControl
   )
   

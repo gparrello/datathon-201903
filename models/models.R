@@ -10,14 +10,21 @@ parts <- make_partition(data, data$datediff_next)
 
 train <- parts[["train"]]
 train$shop <- as.factor(train$shop)
-predictors <- train[, c("shop", "billing")]
+attributes_to_be_used <- c(
+  "shop",
+  "billing",
+  "month",
+  "wday",
+  "quantity"
+)
+predictors <- train[, ..attributes_to_be_used]
 target <- train$datediff_next
 
-ans <- do_modeling(
+model <- do_modeling(
   predictors,
   target
 )
 
-predicted <- get_predictions(predictors, ans)
+predicted <- get_predictions(predictors, model)
 metrics <- get_metrics(predicted, target)
 errors <- get_errors(predicted, target)
