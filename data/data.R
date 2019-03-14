@@ -19,21 +19,24 @@ for (f in names(files)) {
   
   orig[[f]] <- d
 
-  d <- head(d, 3000) # REMOVE THIS
+  # d <- head(d, 3000) # REMOVE THIS
   
   d$timestamp2 <- as.POSIXct(as.POSIXct(d$timestamp, '%Y-%m-%d %H:%M%S'))
   d$date <- lubridate::date(d$timestamp)
+  d$month <- lubridate::month(d$date)
+  d$wday <- lubridate::wday(d$date)
   
   # check quantity and billing for negative numbers, imputate with something
   # check customers that do several transactions in the same day with little time in between each transaction
   
-  # browser()
   d <- d %>%
     group_by(
       customer,
       chain,
       shop,
-      date
+      date,
+      month,
+      wday
     ) %>% 
     summarize(
       quantity = sum(quantity),
@@ -49,12 +52,11 @@ for (f in names(files)) {
   d <- d[, datediff_next := c(diff(as.numeric(date)), 0), customer]
   d <- d[, max_date := date == max(date), customer]
   d <- d[max_date == FALSE]
-  d$max_date <- FALSE
+  d$max_date <- NULL
   
   dt[[f]] <- d
-  print(nrow(d))
   
-  # write.csv(d, file = paste(sep = '', './data/0-output/', f, '.csv'), row.names = FALSE)
+  write.csv(d, file = paste(sep = '', './data/0-output/', f, '.csv'), row.names = FALSE)
 
 }
 
