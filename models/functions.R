@@ -38,17 +38,17 @@ do_modeling <- function(x, y){
   )
   
   # Train RF
-  bestmtry <- tuneRF(
-    x, y,
-    ntreeTry = 100,
-    stepFactor = 2,
-    improve = 0.05,
-    trace = TRUE,
-    trControl = fitControl
-  )
+  # bestmtry <- tuneRF(
+  #   x, y,
+  #   ntreeTry = 100,
+  #   stepFactor = 2,
+  #   improve = 0.05,
+  #   trace = TRUE,
+  #   trControl = fitControl
+  # )
   
-  browser()
-  mtry <- 0
+  # browser()
+  # mtry <- 1
   
   model[["rf"]] <- randomForest(
     y = y,
@@ -56,7 +56,7 @@ do_modeling <- function(x, y){
     importance = TRUE,
     method = "rf",
     ntree = 100,
-    mtry = mtry,
+    mtry = 0,
     trControl = fitControl
   )
   
@@ -65,6 +65,8 @@ do_modeling <- function(x, y){
 }
 
 get_predictions <- function(predictors, model){
+  
+  print(is.data.table(predictors))
   
   predicted <- c()
   for(m in names(model)){

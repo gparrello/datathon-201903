@@ -41,7 +41,8 @@ for (f in names(files)) {
     ) %>% 
     summarize(
       quantity = sum(quantity),
-      billing = sum(billing)
+      billing = sum(billing),
+      num_prod = n()
     ) %>%
     arrange(
       customer,
@@ -71,5 +72,4 @@ for (f in names(files)) {
   
 }
 
-# train <- dt[["t"]]
-# View(train)
+y <- fread('./data/1-input/y.csv')
